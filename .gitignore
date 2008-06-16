@@ -3,4 +3,4 @@
 *.pyc
 */*.pyc
 commit.msg
-
+server/database.py*
