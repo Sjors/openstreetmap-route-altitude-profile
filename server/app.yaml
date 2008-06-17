@@ -1,0 +1,11 @@
+application: osm-route-altitude-profile
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+- url: /
+  script: altitude.py
+
+- url: /load
+  script: myloader.py
