@@ -4,3 +4,4 @@
 */*.pyc
 commit.msg
 server/database.py*
+server/tile.csv
