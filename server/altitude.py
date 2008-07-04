@@ -17,13 +17,13 @@ from google.appengine.ext import webapp
 
 ##### Database #####
 class Altitude(db.Model):
-  pos = db.IntegerProperty()
+  #pos = db.IntegerProperty()
   alt = db.IntegerProperty()
 
 ##### Pages ######
 class MainPage(webapp.RequestHandler):
   def get(self):
-    alts = Altitude.gql("ORDER BY pos DESC LIMIT 10")
+    alts = Altitude.gql("LIMIT 10")
     self.response.out.write("""
       <html>
         <body>""")
@@ -31,6 +31,8 @@ class MainPage(webapp.RequestHandler):
     for alt in alts:
       self.response.out.write("<p>" + str(alt.alt) + "</p>")
 
+    alt = Altitude.get_by_key_name("P-19490696459")
+    self.response.out.write("<p>And fetch directly by keyname:" + str(alt.alt) +  "</p>")
     self.response.out.write("""       </body>
       </html>""")
 

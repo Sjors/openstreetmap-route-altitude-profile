@@ -5,7 +5,31 @@ api_version: 1
 
 handlers:
 - url: /
-  script: altitude.py
+  script: src/altitude.py
 
 - url: /load
-  script: myloader.py
+  script: src/myloader.py
+  login: admin
+
+- url: /truncate
+  script: src/truncate.py
+  login: admin
+
+skip_files: |
+ ^(.*/)?(
+ (app\.yaml)|
+ (app\.yml)|
+ (index\.yaml)|
+ (index\.yml)|
+ (.*\.csv)|
+ (data/.*)|
+ (test/.*)|
+ (src/import-google-apps-engine\.sh)
+ (src/import-google-apps-engine\.py)
+ (#.*#)|
+ (.*~)|
+ (.*\.py[co])|
+ (.*/RCS/.*)|
+ (\..*)|
+ )$
+

@@ -4,4 +4,6 @@
 */*.pyc
 commit.msg
 server/database.py*
-server/tile.csv
+server/data/tile.csv
+server/USE_APP_ENGINE
+server/USE_POSTGRES
