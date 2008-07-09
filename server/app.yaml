@@ -5,15 +5,22 @@ api_version: 1
 
 handlers:
 - url: /
-  script: src/altitude.py
+  script: altitude.py
+
+- url: /profile/.*
+  script: altitude.py
 
 - url: /load
-  script: src/myloader.py
+  script: myloader.py
   login: admin
 
 - url: /truncate
-  script: src/truncate.py
+  script: truncate.py
   login: admin
+
+- url: /favicon.ico
+  static_files: static/images/favicon.ico
+  upload: static/images/favicon.ico
 
 skip_files: |
  ^(.*/)?(

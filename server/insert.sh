@@ -9,7 +9,7 @@
 # You can abort it with ctrl+c
 
 # Get your cookie string at your-app-name.appspot.com/load
-COOKIE="--cookie=ACSID=AJKiYcG9LWK4UVV34IBnWo07ShnMveNNNEPlCbnVJlXyTcxd4lakTGwQJdrhqa33mo9zXXSSZK0kJRQJoTZ0c2Tki1UAiDh7IiHBZ1fQG3B2jVRfhgspGQQWQAqjZY1N0uK8vjUHpeUViCYRo8h8DTzsUBQpdBe7uuLfFQUkMAd-hM3qVTYHTEiR2cn8KWcGdQ9YjCTf7CTNb1ImIsTenS1mD61Hv_1tef-ixD00O1cZ8R0wUYBaBFq41GfKAAD_YaemUFr_6Hji8esBjrngDnFdkNXa_B3x_rusaHS3mizGIVdPXnlwwBESHbB_MvSWan6-qGU3scW442ELLmWvxOvr0m4UqQZwGQBDDPGEcxvaolgeuceUlSozobAMh5Yfu-MhdDzFOeYBgqAlHLZxUw4630wiQye7VbrBxdn7VXQKxlGBrjbJgxafyXaZYb8_A9LdCkOxpx6Y"
+COOKIE="--cookie=ACSID=AJKiYcGKgvz9W0iA0pJg95liB4QAXL89zDouK_cBo-f74dE-9SfAZY6m1bBTJ-4QANbqWlKiUvi_-0TRTNCR3sgDW-8JE7Qj3wLcXdnXK-WBjSbphCqIPk-FbpLseuM-CXbNLIFxFuCo-SrzcRifevKQFT3DrBJU9QHI5j8HFe26t0YglqPUh7TLSvEnvycaHZXrxN0TTbAZYOThl-EknJydB0AH7k4BpGiog6m5o7ykbeHpNeRR8o37NcHHlFfkIhESpp3LHLHctb0aGGgdWKqcxxb9Im8PIUupcOMG1xMGgKs5-Jbq-sEFz8Gx2t8UtsSb3uRobluD9O2BgwDe0urWRPh6k8cClfToEjkNop2AWvvmCxoK5F6SiH6NlYOu0-5f46-7mwbucZ_q4q-nVQNofIGTRgr7UKd5w3VPcqJ3lRbZTo9cQiaBzeRN6zY70hK2Y3uBz7D-"
 
 # If you use the offline data store, the cookie will look like this by defalt:
 # COOKIE="--cookie='dev_appserver_login="test@example.com:True"'"
@@ -52,8 +52,8 @@ do
       rm success
     else
       echo "An error occured! Server probably overloaded. Let's try again..."
-      echo "Retry tile $a... in 30 seconds"
-      sleep 30
+      echo "Retry tile $a... in 5 minutes"
+      sleep 300
     fi
 
   done

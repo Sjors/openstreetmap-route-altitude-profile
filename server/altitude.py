@@ -2,10 +2,10 @@
 from math import floor, ceil
 
 # Geopy: http://exogen.case.edu/projects/geopy/
-# from geopy import distance
+from geopy import distance, util
 
 # http://pygooglechart.slowchop.com/
-# from pygooglechart import XYLineChart, Axis
+from pygooglechart import XYLineChart, Axis
 
 # Google app engine ingredients:
 
@@ -14,6 +14,9 @@ import wsgiref.handlers
 
 from google.appengine.ext import db
 from google.appengine.ext import webapp
+from xml.dom import minidom
+
+#import altitudeprofile_pb2  # Protocol buffers don't work yet in App Engine
 
 ##### Database #####
 class Altitude(db.Model):
@@ -23,83 +26,117 @@ class Altitude(db.Model):
 ##### Pages ######
 class MainPage(webapp.RequestHandler):
   def get(self):
-    alts = Altitude.gql("LIMIT 10")
     self.response.out.write("""
       <html>
         <body>""")
-  
-    for alt in alts:
-      self.response.out.write("<p>" + str(alt.alt) + "</p>")
-
-    alt = Altitude.get_by_key_name("P-19490696459")
-    self.response.out.write("<p>And fetch directly by keyname:" + str(alt.alt) +  "</p>")
+    self.response.out.write("<p>Welcome.</p>")
     self.response.out.write("""       </body>
       </html>""")
+  
+class Profile(webapp.RequestHandler):
+  def post(self, output_format, input_format):
+    # Extract the route:
+    route = []
+    if input_format == "protobuf":
+      # Doesn't work in app egine yet and completely untested
+      route_pb = altitudeprofile_pb2.Route()
+      route_pb.ParseFromString(self.request.body)
+  
+      for i in range(1, len(route_pb.point) + 1):
+        point = route_pb.point[i-1]
+        route += {'id' : i, 'lat' : point.lat, 'lon' : point.lon} 
 
-# Old stuff:
+    elif input_format == "xml":
+      dom = minidom.parseString(self.request.body)
+      points = dom.getElementsByTagName('gml:pos') 
 
-def altitude_profile_function(route):
-    answer = []
-    # print route
-    interpolateRoute(route, 100)
-    # print route
-    for point in route:
-      point['alt'] = getAltitude(point['lat'], point['lon'])
-      # print str(point['id']) + " "  + str(point['alt'])
-      answer.append(point)
+      for i in range(1, len(points) + 1):
+        point = util.parse_geo(points[i-1].firstChild.data)
+        route.append({'id' : i, 'lat' : point[1], 'lon' : point[0]})
 
-    return answer
+    else:
+      # Some sort of error; we're under attack! :-)
+      route = []
+      
 
-#def altitude_profile_gchart_function(route):
-#    # First calculate the altitude profile
-#    profile = altitude_profile_function(route)
-#    
-#    # Create gchart
-#    # http://code.google.com/apis/chart/#line_charts
-#    # http://pygooglechart.slowchop.com/
-#
-#    # For the horizontal scale, we need to know the horizontal distance 
-#    # between the coordinates. First point will have coordinate 0, last 
-#    # point the sum of all distances.
-#    
-#    # y coordinates are the altitudes.
-#    
-#    x_coordinates = [0]
-#    y_coordinates = []  
-#
-#    for i in range(len(profile)-1):
-#      x_coordinates.append(x_coordinates[i])
-#
-#      x_coordinates[i+1] += distance.distance(
-#        (profile[i]['lat'],profile[i]['lon'] ),
-#        (profile[i+1]['lat'],profile[i+1]['lon'] )
-#      ).kilometers
-# 
-#      y_coordinates.append(profile[i]['alt'])
-#
-#    y_coordinates.append(profile[-1]['alt'])
-#
-#    # Create gchart
-#    # http://code.google.com/apis/chart/#line_charts
-#    # http://pygooglechart.slowchop.com/
-#    chart = XYLineChart(325, 200, 
-#                        x_range=(0,max(x_coordinates)), y_range=(min(y_coordinates),max(y_coordinates)))
-#    chart.add_data(x_coordinates)
-#    chart.add_data(y_coordinates)
-#    
-#    chart.set_axis_labels(Axis.BOTTOM, ['0', str(max(x_coordinates))[0:4] + " km"])
-#    chart.set_axis_labels(Axis.LEFT, [str(min(y_coordinates)) + " m", str(max(y_coordinates)) + " m"])
-#
-#    # Return gchart url:
-#    return {'gchart_url' : chart.get_url()}
+    # Find out what the desired output is
+    if output_format == "gchart":
+      url = altitude_profile_gchart(route)
+      self.response.out.write(url)
+    
+    elif output_format == "xml":
+      profile = altitude_profile(route)
+      # Now return a 'nice' XML document with the result
+      xml = '<?xml version="1.0" encoding="UTF-8"?>'
+      xml += '<xls:XLS xmlns:xls="http://www.opengis.net/xls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml" version="1.1" xsi:schemaLocation="http://www.opengis.net/xls http://schemas.opengis.net/ols/1.1.0/RouteService.xsd">'
+      xml += '  <xls:RouteGeometry>'
+      xml += '    <gml:LineString srsName="EPSG:4326">'
+      for point in route:
+        xml += '      <gml:pos>' + str(point['lon']) + " " + str(point['lat']) + " " + str(point['alt']) + '</gml:pos>'
+
+      xml += '    </gml:LineString>'
+      xml += '  </xls:RouteGeometry>'
+      xml += '</xls:XLS>'
+
+      self.response.out.write(xml)
+      
+
+def altitude_profile_gchart(route):
+    # First calculate the altitude profile
+    profile = altitude_profile(route)
+    
+    # Create gchart
+    # http://code.google.com/apis/chart/#line_charts
+    # http://pygooglechart.slowchop.com/
+
+    # For the horizontal scale, we need to know the horizontal distance 
+    # between the coordinates. First point will have coordinate 0, last 
+    # point the sum of all distances.
+    
+    # y coordinates are the altitudes.
+    
+    x_coordinates = [0]
+    y_coordinates = []  
+
+    for i in range(len(profile)-1):
+      x_coordinates.append(x_coordinates[i])
+
+      x_coordinates[i+1] += distance.distance(
+        (profile[i]['lat'],profile[i]['lon'] ),
+        (profile[i+1]['lat'],profile[i+1]['lon'] )
+      ).kilometers
+ 
+      y_coordinates.append(profile[i]['alt'])
+
+    y_coordinates.append(profile[-1]['alt'])
+
+    # Create gchart
+    # http://code.google.com/apis/chart/#line_charts
+    # http://pygooglechart.slowchop.com/
+    chart = XYLineChart(325, 200, 
+                        x_range=(0,max(x_coordinates)), y_range=(min(y_coordinates),max(y_coordinates)))
+    chart.add_data(x_coordinates)
+    chart.add_data(y_coordinates)
+    
+    chart.set_axis_labels(Axis.BOTTOM, ['0', str(max(x_coordinates))[0:4] + " km"])
+    chart.set_axis_labels(Axis.LEFT, [str(min(y_coordinates)) + " m", str(max(y_coordinates)) + " m"])
+
+    # Return gchart url:
+    return chart.get_url()
+    
+def altitude_profile(route):
+  answer = []
+  interpolateRoute(route, 100)
+  for point in route:
+    point['alt'] = getAltitude(point['lat'], point['lon'])
+    answer.append(point)
+  return answer
     
 ##### Database functions #####
 
 def getAltitude(lat,lon):
   pos = posFromLatLon(lat,lon)
-  sql = db.query("SELECT alt FROM altitude WHERE pos = " + str(pos))
-  res = sql.getresult()
-  return res[0][0]
+  return fetchAltitudeFromDatastore(pos)
 
 ##### Helper functions ######
 
@@ -189,11 +226,23 @@ def interpolateRoute(route, n):
 
     i = i + len(pair) - 1 
 
+#### Database ####
+def fetchAltitudeFromDatastore(pos):
+  return Altitude.get_by_key_name("P" + str(pos)).alt
+
+def fetchAltitudeFromPostgres(pos):
+  sql = db.query("SELECT alt FROM altitude WHERE pos = " + str(pos))
+  res = sql.getresult()
+  return res[0][0]
+
 #### Main program ####
 
 def main():
   application = webapp.WSGIApplication(
-                                       [('/', MainPage)],
+                                       [
+                                        ('/', MainPage),
+                                        (r'/profile/(.*)/(.*)/', Profile)
+                                       ],
                                        debug=True)
   wsgiref.handlers.CGIHandler().run(application)
 

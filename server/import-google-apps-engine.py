@@ -81,7 +81,7 @@ if __name__ == '__main__':
       # the data row by row. sys.argv[2] represents the line number to insert.
       # You should create a script to perform the upload. Start at 1, end at 1200.
       row = int(sys.argv[2])
-      print "About to make cvs for row " + str(row) + " of 1200..."
+      print "About to make csv for row " + str(row) + " of 1200..."
       row_top = row
       row_bottom = row
       col_left = 0
