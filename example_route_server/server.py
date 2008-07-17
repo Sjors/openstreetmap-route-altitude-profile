@@ -3,6 +3,8 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import urllib
 import altitudeprofile_pb2
 
+from mod_python import apache
+
 # Define example routes.
 # See http://wiki.openstreetmap.org/index.php/Route_Altitude_Profile_Example_Routes
 # Convert with:
@@ -32,75 +34,41 @@ routes = [route1]
 #url_server_root = 'http://localhost:8080/';
 url_server_root = 'http://altitude.sprovoost.nl/';
 
-# HTTP server to serve the example routes
-class MyHandler(BaseHTTPRequestHandler):
-  def do_GET(self):
-    if self.path == "/index.html":
-      # Show all the options to the user
+def demo(req, route, input, output):
+  # Determine route number (substract 1 because arrays start 
+  # at 0): 
+  route_number = int(route) - 1
 
-      f = open(curdir + sep + "www" + sep + "index.html") 
+  input_type = input
+  output_type = output
+  
+  if input_type == "" or output_type == "":
+    exit()
 
-      self.send_response(200)
-      self.send_header('Content-type',	'text/html')
-      self.end_headers()
-      self.wfile.write(f.read())
-      f.close()
-      return
-   
-    else: 
-      # Determine route number (substract 1 because arrays start 
-      # at 0): 
-      route_number = int(self.path[-1]) - 1
-      
-      input_type = inputTypeFromUrl(self.path)
-      output_type = outputTypeFromUrl(self.path)
-      
-      if input_type == "" or output_type == "":
-        exit()
+  f = fetchResult(input_type, routes[route_number], output_type)      
+  
+  if output_type == "xml":
+  
+    s = f.read()
+    f.close()
 
-      f = fetchResult(input_type, routes[route_number], output_type)      
+    req.content_type = 'text/xml'
 
-      if output_type == "xml":
-        self.send_response(200)
-        self.send_header('Content-type',	'text/xml')
-        self.end_headers()
-      
-        s = f.read()
-        f.close()
+    req.write(s)
+  
+  elif output_type == "gchart":
+  
+    s = f.read()
+    f.close()
+    
+    req.content_type = 'text/html'
 
-        self.wfile.write(s)
-      
-      elif output_type == "gchart":
-        self.send_response(200)
-        self.send_header('Content-type',	'text/html')
-        self.end_headers()
-      
-        s = f.read()
-        f.close()
-        
-        self.wfile.write('<html>')
-        self.wfile.write('<head></head>')
-        self.wfile.write('<body>')
-        self.wfile.write('<img src="' + s +  '" alt="Altitude profile"/>')
-
-
-def inputTypeFromUrl(url):
-  if "input=protobuf" in url:
-    return "protobuf"
-  elif "input=xml" in url:  
-    return "xml"
-  else:
-    return ""
-
-def outputTypeFromUrl(url):
-  if "output=protobuf" in url:
-    return "protobuf"
-  elif "output=xml" in url:  
-    return "xml"
-  elif "output=gchart" in url:  
-    return "gchart"
-  else:
-    return ""
+    req.write('<html>')
+    req.write('<head></head>')
+    req.write('<body>')
+    req.write('<img src="' + s +  '" alt="Altitude profile"/>')
+  
+  #return apache.OK
 
 def fetchResult(input_type, route, output_type):
   if input_type == "protobuf":  
