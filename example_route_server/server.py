@@ -33,8 +33,8 @@ routes = [route1]
 def demo(req, route, input, output, server):
   # ULR of altitude server:
   if server == "pg":
-    url_server_root = 'http://altitude-pg/';
-    #url_server_root = 'http://altitude-pg.sprovoost.nl/';
+    #url_server_root = 'http://altitude-pg/';
+    url_server_root = 'http://altitude-pg.sprovoost.nl/';
   elif server == "app":
     #url_server_root = 'http://localhost:8080/';
     url_server_root = 'http://altitude.sprovoost.nl/';
