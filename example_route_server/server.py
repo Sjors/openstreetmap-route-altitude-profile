@@ -30,11 +30,17 @@ route1 = [\
 
 routes = [route1]
 
-# ULR of altitude server:
-#url_server_root = 'http://localhost:8080/';
-url_server_root = 'http://altitude.sprovoost.nl/';
+def demo(req, route, input, output, server):
+  # ULR of altitude server:
+  if server == "pg":
+    url_server_root = 'http://altitude-pg/';
+    #url_server_root = 'http://altitude-pg.sprovoost.nl/';
+  elif server == "app":
+    #url_server_root = 'http://localhost:8080/';
+    url_server_root = 'http://altitude.sprovoost.nl/';
+  else:
+    exit()
 
-def demo(req, route, input, output):
   # Determine route number (substract 1 because arrays start 
   # at 0): 
   route_number = int(route) - 1
@@ -45,7 +51,7 @@ def demo(req, route, input, output):
   if input_type == "" or output_type == "":
     exit()
 
-  f = fetchResult(input_type, routes[route_number], output_type)      
+  f = fetchResult(url_server_root, input_type, routes[route_number], output_type)      
   
   if output_type == "xml":
   
@@ -70,7 +76,7 @@ def demo(req, route, input, output):
   
   #return apache.OK
 
-def fetchResult(input_type, route, output_type):
+def fetchResult(url_server_root, input_type, route, output_type):
   if input_type == "protobuf":  
     # Prepare route for transmission (Protocol Buffer)
     route_pb = altitudeprofile_pb2.Route()
@@ -106,11 +112,4 @@ def fetchResult(input_type, route, output_type):
     return urllib.urlopen(url_server_root + "profile/" + output_type + "/xml/", route_xml)
 
 if __name__ == '__main__':
-    try:
-        httpserver = HTTPServer(('', 80), MyHandler)
-        print 'started httpserver...'
-        httpserver.serve_forever()
-    except KeyboardInterrupt:
-        print '^C received, shutting down server'
-        httpserver.socket.close()
-   
+  None 
